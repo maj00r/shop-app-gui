@@ -87,89 +87,32 @@
 </template>
 
 <script>
+
+import { API_BASE_URL } from "@/main";
 export default {
   name: "HomeView",
   data() {
     return {
-      recommendedProducts: [
-        {
-          id: 1,
-          name: "Recommended Product A",
-          description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-          price: 29.99,
-          image: "https://via.placeholder.com/300",
-          flag: "Recommended",
-        },
-        {
-          id: 2,
-          name: "Recommended Product B",
-          description: "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-          price: 19.99,
-          image: "https://via.placeholder.com/300",
-          flag: null,
-        },
-        {
-          id: 3,
-          name: "Recommended Product C",
-          description: "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
-          price: 39.99,
-          image: "https://via.placeholder.com/300",
-          flag: "Recommended",
-        },
-      ],
-      salesProducts: [
-        {
-          id: 4,
-          name: "Sales Product A",
-          description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-          price: 15.99,
-          image: "https://via.placeholder.com/300",
-          flag: "Sale",
-        },
-        {
-          id: 5,
-          name: "Sales Product B",
-          description: "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-          price: 10.99,
-          image: "https://via.placeholder.com/300",
-          flag: "Sale",
-        },
-        {
-          id: 6,
-          name: "Sales Product C",
-          description: "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
-          price: 20.99,
-          image: "https://via.placeholder.com/300",
-          flag: "Sale",
-        },
-      ],
-      popularProducts: [
-        {
-          id: 7,
-          name: "Popular Product A",
-          description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-          price: 49.99,
-          image: "https://via.placeholder.com/300",
-          flag: "Popular",
-        },
-        {
-          id: 8,
-          name: "Popular Product B",
-          description: "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-          price: 35.99,
-          image: "https://via.placeholder.com/300",
-          flag: "Popular",
-        },
-        {
-          id: 9,
-          name: "Popular Product C",
-          description: "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
-          price: 60.99,
-          image: "https://via.placeholder.com/300",
-          flag: "Popular",
-        },
-      ],
+      recommendedProducts: [ ],
+      salesProducts: [ ],
+      popularProducts: [ ],
     };
+  },
+  created() {
+    this.fetchProducts();
+  },
+  methods: {
+    async fetchProducts() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/products`);
+        const products = (await response.json()).products;
+        this.recommendedProducts = products.filter((product) => product.flag === "Recommended");
+        this.salesProducts = products.filter((product) => product.flag === "Sale");
+        this.popularProducts = products.filter((product) => product.flag === "Popular");
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    },
   },
 };
 </script>

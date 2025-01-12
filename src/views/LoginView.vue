@@ -43,21 +43,45 @@
 </template>
 
 <script>
+import { API_BASE_URL } from "@/main";
 export default {
   data() {
     return {
       isLoginFormValid: false,
       loginData: {
-        email: "",
-        password: "",
+        email: "", //"a@w.pl",
+        password: "", //"12345QWERTq!",
       },
     };
   },
   methods: {
-    login() {
-      if (this.isLoginFormValid) {
-        // Handle login logic here
-        alert("Logged in successfully!");
+    async login() {
+      if (!this.isLoginFormValid) {
+        alert("Please fill out all fields correctly.");
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/users/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: this.loginData.email,
+            password: this.loginData.password,
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || "Login failed.");
+        }
+
+        this.$router.push({ name: "home" }); 
+      } catch (error) {
+        console.error("Login error:", error.message);
+        alert(error.message);
       }
     },
     navigateToRegister() {

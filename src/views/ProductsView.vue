@@ -10,7 +10,7 @@
           <v-card-text>
             <v-select
               v-model="selectedCategory"
-              :items="categories"
+              :items="categories.map(x => x.name)"
               outlined
               dense
               label="Category"
@@ -84,49 +84,65 @@
 </template>
 
 <script>
+import { API_BASE_URL } from "@/main";
 export default {
   name: "ProductListing",
   data() {
     return {
-      categories: ["Electronics", "Furniture", "Clothing", "Books"],
-      products: Array.from({ length: 50 }, (_, i) => ({
-        id: i + 1,
-        name: `Product ${i + 1}`,
-        description: `Description for product ${i + 1}`,
-        price: (Math.random() * 1000).toFixed(2),
-        category: {
-          id: Math.floor(Math.random() * 4) + 1,
-          name: ["Electronics", "Furniture", "Clothing", "Books"][
-            Math.floor(Math.random() * 4)
-          ],
-        },
-        image: "https://via.placeholder.com/300",
-      })),
+      categories: [],
+      totalPages: 1,
+      paginatedProducts: [],
       selectedCategory: null,
       minPrice: 0,
       maxPrice: 1000,
       page: 1,
-      itemsPerPage: 9, // Number of products per page
+      itemsPerPage: 9,
     };
   },
-  computed: {
-    filteredProducts() {
-      return this.products.filter(product => {
-        const isCategoryMatch = this.selectedCategory
-          ? product.category.id === this.selectedCategory
-          : true;
-        const isPriceInRange =
-          product.price >= this.minPrice && product.price <= this.maxPrice;
-        return isCategoryMatch && isPriceInRange;
-      });
+  created() {
+    this.fetchCategories();
+    this.fetchProducts();
+  },
+  watch: {
+    selectedCategory() {
+      this.page = 1; // Reset to the first page on category change
+      this.fetchProducts(); // Re-query products based on the new category
     },
-    totalPages() {
-      return Math.ceil(this.filteredProducts.length / this.itemsPerPage);
-    },
-    paginatedProducts() {
-      const start = (this.page - 1) * this.itemsPerPage;
-      const end = start + this.itemsPerPage;
-      return this.filteredProducts.slice(start, end);
+  },
+
+  methods: {
+    async fetchCategories() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/products/categories`);
+        const responseBody = await response.json();
+        this.categories = responseBody;
+        this.selectedCategory = this.categories[0].name;
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+      
+    },  
+
+    async fetchProducts() {
+      try {
+
+        const params = new URLSearchParams();
+        if (this.selectedCategory) params.append("categoryId", this.categories.find(x => x.name == this.selectedCategory).id);
+        if (this.minPrice) params.append("minPrice", this.minPrice);
+        if (this.maxPrice) params.append("maxPrice", this.maxPrice);
+        params.append("page", this.page);
+        params.append("itemsPerPage", this.itemsPerPage);
+
+        const response = await fetch(`${API_BASE_URL}/api/products?${params.toString()}`);
+        const responseBody = await response.json();
+        this.paginatedProducts = responseBody.products;
+        this.totalPages = responseBody.totalPages;
+        this.itemsPerPage = responseBody.itemsPerPage;
+
+
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
     },
   },
 };

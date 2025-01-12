@@ -7,12 +7,12 @@
             <h3>Your Shopping Cart</h3>
           </v-card-title>
           <v-card-text>
-            <div v-if="cartItems.length === 0">
+            <div v-if="!cart.items?.length">
               <p>Your cart is empty.</p>
             </div>
             <v-row v-else>
               <v-col
-                v-for="item in cartItems"
+                v-for="item in cart.items"
                 :key="item.id"
                 cols="12"
                 class="mb-4"
@@ -21,11 +21,10 @@
                   <v-card-title>
                     <v-row align="center">
                       <v-col cols="2">
-                        <v-img :src="item.image" alt="product image" width="60" height="60"></v-img>
+                        <v-img :src="item.product.image" alt="product image" width="60" height="60"></v-img>
                       </v-col>
                       <v-col>
-                        <v-card-subtitle>{{ item.name }}</v-card-subtitle>
-                        <v-card-subtitle>{{ item.category }}</v-card-subtitle>
+                        <v-card-subtitle>{{ item.product.name }}</v-card-subtitle>
                       </v-col>
                     </v-row>
                   </v-card-title>
@@ -41,10 +40,10 @@
                         </v-btn>
                       </v-col>
                       <v-col cols="4" class="text-center">
-                        <h4>${{ item.price * item.quantity }}</h4>
+                        <h4>${{ +(Math.round(item.product.price * item.quantity + "e+2")  + "e-2") }}</h4>
                       </v-col>
                       <v-col cols="4" class="text-right">
-                        <v-btn color="red" @click="removeItem(item.id)" icon>
+                        <v-btn color="red" @click="removeItem(item)" icon>
                           <v-icon>mdi-delete</v-icon>
                         </v-btn>
                       </v-col>
@@ -58,7 +57,7 @@
 
             <v-row>
               <v-col cols="12" class="text-right">
-                <h3>Total: ${{ totalPrice }}</h3>
+                <h3>Total: ${{ cart.totalPrice }}</h3>
                 <v-btn color="primary" @click="checkout">Proceed to Checkout</v-btn>
               </v-col>
             </v-row>
@@ -70,36 +69,89 @@
 </template>
 
 <script>
+import { API_BASE_URL, verify } from "@/main";
+
 export default {
-  name: "Cart",
   data() {
     return {
-      cartItems: [
-        { id: 1, name: "Smartphone", category: "Electronics", price: 499, quantity: 2, image: "https://via.placeholder.com/100" },
-        { id: 2, name: "Laptop", category: "Electronics", price: 899, quantity: 1, image: "https://via.placeholder.com/100" },
-        { id: 3, name: "Sofa", category: "Furniture", price: 599, quantity: 1, image: "https://via.placeholder.com/100" },
-      ],
+      cart: {}, // Fetched from the server
     };
   },
-  computed: {
-    totalPrice() {
-      return this.cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    },
+  async created() {
+    try {
+      await verify();
+    } catch {
+      this.$router.push("/login");  
+    }
+    
+    this.fetchCart(); // Fetch the cart when the component is created
   },
   methods: {
-    updateQuantity(item, delta) {
-      // Adjust the quantity by +1 or -1 and ensure it stays within valid bounds
-      item.quantity += delta;
-      if (item.quantity < 1) item.quantity = 1;  // Min quantity is 1
-      if (item.quantity > 99) item.quantity = 99;  // Max quantity is 99
+    async fetchCart() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/cart`, {
+          credentials: 'include',
+        });
+        if (!response.ok) {
+          throw new Error(`Error fetching cart: ${response.statusText}`);
+        }
+        this.cart = await response.json();
+      } catch (error) {
+        console.error(error.message);
+      }
     },
-    removeItem(itemId) {
-      // Remove the item from the cart
-      this.cartItems = this.cartItems.filter(item => item.id !== itemId);
+    async addItemToCart(item) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/cart/add`, {
+          method: "POST",
+          credentials: 'include',
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(item),
+        });
+        if (!response.ok) {
+          throw new Error(`Error adding item to cart: ${response.statusText}`);
+        }
+        alert(await response.text());
+        this.fetchCart(); // Refresh the cart
+      } catch (error) {
+        console.error(error.message);
+      }
+    },
+    async updateQuantity(item, delta) {
+      const newQuantity = item.quantity + delta;
+      if (newQuantity < 1 || newQuantity > 99) return;
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/cart/update/${item.productId}?quantity=${newQuantity}`, {
+          method: "PUT",
+          credentials: 'include',
+        });
+        if (!response.ok) {
+          throw new Error(`Error updating item quantity: ${response.statusText}`);
+        }
+        this.fetchCart(); // Refresh the cart
+      } catch (error) {
+        console.error(error.message);
+      }
+    },
+    async removeItem(item) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/cart/remove/${item.productId}`, {
+          method: "DELETE",
+          credentials: 'include',
+        });
+        if (!response.ok) {
+          throw new Error(`Error removing item: ${response.statusText}`);
+        }
+        this.fetchCart(); // Refresh the cart
+      } catch (error) {
+        console.error(error.message);
+      }
     },
     checkout() {
-      // Proceed to checkout (to be implemented)
-      alert("Proceeding to checkout...");
+      this.$router.push({ name: "checkout" });
     },
   },
 };

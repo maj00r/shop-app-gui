@@ -12,85 +12,41 @@
               <v-row>
                 <!-- Personal Information Section -->
                 <v-col cols="12" md="6">
-                  <v-text-field
-                    label="Full Name"
-                    v-model="form.name"
-                    :rules="[rules.required]"
-                    placeholder="Enter your full name"
-                    required
-                  ></v-text-field>
-                </v-col>
-
-                <v-col cols="12" md="6">
-                  <v-text-field
-                    label="Email"
-                    v-model="form.email"
-                    :rules="[rules.required, rules.email]"
-                    placeholder="Enter your email address"
-                    required
-                  ></v-text-field>
+                  <v-text-field label="Full Name" v-model="form.name" :rules="[rules.required]"
+                    placeholder="Enter your full name" required></v-text-field>
                 </v-col>
 
                 <!-- Address Section -->
                 <v-col cols="12" md="6">
-                  <v-text-field
-                    label="Address"
-                    v-model="form.address"
-                    :rules="[rules.required]"
-                    placeholder="Enter your address"
-                    required
-                  ></v-text-field>
+                  <v-text-field label="Address" v-model="form.address" :rules="[rules.required]"
+                    placeholder="Enter your address" required></v-text-field>
                 </v-col>
 
                 <v-col cols="12" md="6">
-                  <v-text-field
-                    label="City"
-                    v-model="form.city"
-                    :rules="[rules.required]"
-                    placeholder="Enter your city"
-                    required
-                  ></v-text-field>
+                  <v-text-field label="City" v-model="form.city" :rules="[rules.required]" placeholder="Enter your city"
+                    required></v-text-field>
                 </v-col>
 
                 <v-col cols="12" md="6">
-                  <v-text-field
-                    label="Postal Code"
-                    v-model="form.postalCode"
-                    :rules="[rules.required]"
-                    placeholder="Enter your postal code"
-                    required
-                  ></v-text-field>
+                  <v-text-field label="Postal Code" v-model="form.postalCode" :rules="[rules.required]"
+                    placeholder="Enter your postal code" required></v-text-field>
                 </v-col>
 
                 <!-- Payment Section -->
                 <v-col cols="12" md="6">
-                  <v-text-field
-                    label="Credit Card Number"
-                    v-model="form.creditCardNumber"
-                    :rules="[rules.required, rules.creditCard]"
-                    placeholder="Enter your credit card number"
-                    required
-                  ></v-text-field>
+                  <v-text-field label="Credit Card Number" v-model="form.creditCardNumber"
+                    :rules="[rules.required, rules.creditCard]" placeholder="Enter your credit card number"
+                    required></v-text-field>
                 </v-col>
 
                 <v-col cols="12" md="6">
-                  <v-text-field
-                    label="Expiration Date"
-                    v-model="form.expirationDate"
-                    :rules="[rules.required]"
-                    placeholder="MM/YY"
-                    required
-                  ></v-text-field>
+                  <v-text-field label="Expiration Date" v-model="form.expirationDate" :rules="[rules.required]"
+                    placeholder="MM/YY" required></v-text-field>
                 </v-col>
 
                 <v-col cols="12" md="6">
-                  <v-text-field
-                    label="CVV"
-                    v-model="form.cvv"
-                    :rules="[rules.required]"
-                    placeholder="Enter CVV"
-                    required
-                  ></v-text-field>
+                  <v-text-field label="CVV" v-model="form.cvv" :rules="[rules.required]" placeholder="Enter CVV"
+                    required></v-text-field>
                 </v-col>
 
                 <!-- Order Summary Section -->
@@ -117,14 +73,14 @@
 </template>
 
 <script>
+import { API_BASE_URL , verify} from "@/main";
 export default {
-  name: 'Checkout',
   data() {
     return {
       valid: false,
+      totalPrice: 0,
       form: {
         name: '',
-        email: '',
         address: '',
         city: '',
         postalCode: '',
@@ -134,26 +90,69 @@ export default {
       },
       rules: {
         required: value => !!value || 'This field is required',
-        email: value => /.+@.+/.test(value) || 'E-mail must be valid',
         creditCard: value => /^\d{16}$/.test(value) || 'Credit card number must be 16 digits',
       },
     };
   },
-  computed: {
-    totalPrice() {
-      // Placeholder dla obliczenia całkowitej ceny (na razie przyjmujemy 200 jako przykładową cenę)
-      return 200;
-    },
+  async created() {
+    try {
+      await verify();
+    } catch {
+      this.$router.push("/login");  
+    }
+    this.fetchCart(); // Fetch the cart when the component is created
   },
   methods: {
-    handleCheckout() {
-      if (this.valid) {
-        // Logika do obsługi zamówienia (np. wysyłanie danych do backendu)
-        alert('Order Completed!');
-        // Można dodać logikę do czyszczenia formularza lub przekierowania
-        this.$router.push({ name: 'OrderConfirmation' });
+    async fetchCart() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/cart`, {
+          credentials: 'include',
+        });
+        if (!response.ok) {
+          throw new Error(`Error fetching cart: ${response.statusText}`);
+        }
+        const cart = await response.json();
+        this.totalPrice = cart.totalPrice;
+      } catch (error) {
+        console.error(error.message);
       }
     },
+    async handleCheckout() {
+      if (!this.valid) {
+        return;
+      }
+
+      // Create the payload object using the form data
+      const checkoutPayload = {
+        name: this.form.name,
+        address: this.form.address,
+        city: this.form.city,
+        postalCode: this.form.postalCode,
+        creditCardNumber: this.form.creditCardNumber,
+        expirationDate: this.form.expirationDate,
+        cvv: this.form.cvv,
+      };
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/checkout`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",  // Set the content type to JSON
+          },
+          body: JSON.stringify(checkoutPayload),  // Send the data as JSON
+          credentials: "include",  // Include credentials (cookies)
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error during checkout: ${response.statusText}`);
+        }
+
+        alert('Checkout successful!');
+      } catch (error) {
+        console.error(error.message);
+      }
+    }
+
   },
 };
 </script>

@@ -54,6 +54,7 @@
 </template>
 
 <script>
+import { API_BASE_URL } from "@/main";
 export default {
   data() {
     return {
@@ -67,14 +68,30 @@ export default {
     };
   },
   methods: {
-    register() {
-      if (this.isRegisterFormValid) {
-        // Handle registration logic here
-        if (this.registerData.password === this.registerData.confirmPassword) {
-          alert("Registered successfully!");
-        } else {
-          alert("Passwords do not match.");
+    async register() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/users/create`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: this.registerData.name,
+            email: this.registerData.email,
+            password: this.registerData.password,
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || "Registration failed.");
         }
+
+        await response.json();
+        this.$router.push({ name: "login" }); // Redirect to login page after successful registration
+      } catch (error) {
+        console.error("Error during registration:", error.message);
+        alert(error.message);
       }
     },
     navigateToLogin() {
