@@ -9,7 +9,7 @@ import * as directives from 'vuetify/directives'
 import App from './App.vue'
 import router from './router'
 
-export const API_BASE_URL = "http://localhost:5223";
+export const API_BASE_URL =  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5223";
 
 export async function verify() {
   try {
