@@ -170,7 +170,10 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 500px;
+  
+  @media screen and (min-width: 960px) {
+    height: 500px;
+  }
   /* Set a consistent height for all cards */
 }
 </style>

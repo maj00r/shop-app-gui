@@ -37,7 +37,7 @@
                   outlined
                   dense
                   :min="minPrice"
-                  max="1000"
+                  max="100000"
                 ></v-text-field>
               </v-col>
             </v-row>
@@ -108,6 +108,9 @@ export default {
       this.page = 1; // Reset to the first page on category change
       this.fetchProducts(); // Re-query products based on the new category
     },
+    page() {
+      this.fetchProducts(); 
+    }
   },
 
   methods: {
@@ -153,6 +156,19 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 500px;
+  
+  @media screen and (min-width: 960px) {
+    height: 500px;
+  }
+
+  p {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .v-card-actions {
+    flex-wrap: wrap;
+  }
 }
 </style>
