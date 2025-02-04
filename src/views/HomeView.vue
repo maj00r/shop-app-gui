@@ -122,7 +122,24 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 600px;
+
+  @media screen and (min-width: 960px) {
+    height: 550px;
+  }
+
+  p {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .v-card-actions {
+    flex-wrap: wrap;
+  }
+
+  .v-img {
+    max-height: 350px;
+  }
 }
 
 .col{

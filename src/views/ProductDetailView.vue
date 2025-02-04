@@ -172,7 +172,21 @@ export default {
   justify-content: space-between;
   
   @media screen and (min-width: 960px) {
-    height: 500px;
+    height: 550px;
+  }
+
+  p {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .v-card-actions {
+    flex-wrap: wrap;
+  }
+
+  .v-img {
+    max-height: 350px;
   }
   /* Set a consistent height for all cards */
 }

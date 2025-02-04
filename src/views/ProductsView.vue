@@ -158,7 +158,7 @@ export default {
   justify-content: space-between;
   
   @media screen and (min-width: 960px) {
-    height: 500px;
+    height: 550px;
   }
 
   p {
@@ -169,6 +169,10 @@ export default {
 
   .v-card-actions {
     flex-wrap: wrap;
+  }
+
+  .v-img {
+    max-height: 350px;
   }
 }
 </style>
